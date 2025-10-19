@@ -1,0 +1,1 @@
+The answer should be in maximum 10 lines and dont waste any spaces and dont ask folloup questions 
