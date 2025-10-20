@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException,Header
 from sqlalchemy import create_engine, Column, Integer, String,Boolean,JSON,ForeignKey,DateTime,func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session,relationship
@@ -8,7 +8,7 @@ from typing import List
 from auth.access_token import create_access_token,create_refresh_token,ACCESS_TOKEN_EXPIRE_MINUTES,SECRET_KEY,ALGORITHM
 from datetime import timedelta,datetime
 import uuid
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer,APIKeyHeader
 from jose import JWTError,jwt
 import json
 
@@ -16,6 +16,10 @@ import json
 
 # Initialize app
 app = FastAPI()
+
+
+
+
 
 # Database setup
 engine = create_engine("sqlite:///user.db", echo=True)
@@ -164,6 +168,32 @@ def login(email:str,password=str,db:Session=Depends(get_db_session)):
 
 
     return {"access_token":access_token,"refresh_token":refresh_token,"token_type":"bearer"}
+
+
+@app.post("/logout")
+def logout(email: str, password: str, db: Session = Depends(get_db_session)):
+    """
+    Logout a user using email + password.
+    Revokes all refresh tokens and clears the access token.
+    """
+    # Step 1: Verify credentials
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not verify(password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # Step 2: Revoke all refresh tokens
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user.id,
+        RefreshToken.isrevoked == False
+    ).update({"isrevoked": True})
+
+    # Step 3: Clear current access token
+    user.current_token = None
+    db.add(user)
+    db.commit()
+
+    return {"message": "User successfully logged out"}
+
 
 @app.post("/refresh")
 def refresh_access_token(email: str, db: Session = Depends(get_db_session)):
