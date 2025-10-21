@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException,Header
+from fastapi import FastAPI, Depends, HTTPException,Header,APIRouter,Request
 from sqlalchemy import create_engine, Column, Integer, String,Boolean,JSON,ForeignKey,DateTime,func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session,relationship
@@ -15,7 +15,7 @@ import json
 
 
 # Initialize app
-app = FastAPI()
+app = APIRouter()
 
 
 
@@ -142,7 +142,7 @@ def add_user_no_password(user: CreateUser):
 
 # login route and creating access token
 @app.post("/login")
-def login(email:str,password=str,db:Session=Depends(get_db_session)):
+def login(request: Request,email:str,password=str,db:Session=Depends(get_db_session)):
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify(password,user.hashed_password):
         raise HTTPException(status_code=404, detail="User not found")
@@ -159,6 +159,9 @@ def login(email:str,password=str,db:Session=Depends(get_db_session)):
         expires_at=datetime.utcnow() + timedelta(days=7)    
         
     )
+
+
+    request.session["email"] = email
     db.add(tokens)
     db.commit()
     db.refresh(tokens)
@@ -171,16 +174,17 @@ def login(email:str,password=str,db:Session=Depends(get_db_session)):
 
 
 @app.post("/logout")
-def logout(email: str, password: str, db: Session = Depends(get_db_session)):
+def logout(request:Request, db: Session = Depends(get_db_session)):
     """
     Logout a user using email + password.
     Revokes all refresh tokens and clears the access token.
     """
     # Step 1: Verify credentials
+    email=request.session.get("email")
     user = db.query(User).filter(User.email == email).first()
-    if not user or not verify(password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     # Step 2: Revoke all refresh tokens
     db.query(RefreshToken).filter(
         RefreshToken.user_id == user.id,
@@ -191,10 +195,10 @@ def logout(email: str, password: str, db: Session = Depends(get_db_session)):
     user.current_token = None
     db.add(user)
     db.commit()
+    request.session.clear()
 
     return {"message": "User successfully logged out"}
-
-
+#  
 @app.post("/refresh")
 def refresh_access_token(email: str, db: Session = Depends(get_db_session)):
     user = db.query(User).filter(User.email == email).first()
