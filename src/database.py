@@ -11,8 +11,14 @@ import uuid
 from fastapi.security import OAuth2PasswordBearer,APIKeyHeader
 from jose import JWTError,jwt
 import json
+from auth.roles import require_role_session
 
+import os
+from dotenv import load_dotenv
 
+app=FastAPI()
+load_dotenv()
+ADMIN_KEY=os.getenv("ADMIN_KEY")
 
 # Initialize app
 app = APIRouter()
@@ -37,6 +43,8 @@ class User(Base):
     ispremium=Column(Boolean, default=False)
     throttle=Column(JSON,default=[])
     tokens = relationship("RefreshToken", back_populates="user")
+    role=Column(String,default="user")
+    
 class History(Base):
     __tablename__ = "history"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -386,7 +394,11 @@ def get_user_by_email(email: str, db: Session = Depends(get_db_session)):
 
 
 @app.get("/users/display",response_model=List[UserResponse])
-def displayall(db:Session=Depends(get_db_session)):
+def displayall(request:Request,db:Session=Depends(get_db_session)):
+    email = request.session.get("email")
+    admin = verify_user_by_email(email)
+    require_role_session(admin, "admin")
+
     users=db.query(User).all()
     if not users:
         raise HTTPException(status_code=404,detail="no users to display")
@@ -538,3 +550,32 @@ def get_latest_refresh_token(user_id: int):
         if token_entry:
             return token_entry.refresh_token
         return None
+    
+
+
+
+
+
+def create_admin(email: str, name: str, password: str):
+    db = SessionLocal()
+    try:
+        if db.query(User).filter(User.email == email).first():
+            print("User already exists")
+            return
+        admin_user = User(
+            email=email,
+            name=name,
+            hashed_password=hash(password),
+            unique_id=unique_id(name),
+            role="admin"
+        )
+        db.add(admin_user)
+        db.commit()
+        print(f"Admin {email} created successfully.")
+    finally:
+        db.close()
+
+
+create_admin(email="admin3@chatbot.com", name="ADMIN_", password=ADMIN_KEY)
+
+

@@ -3,11 +3,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI,Depends,HTTPException,Request
 from pydantic import BaseModel
 from models.nvidia_client import Nvidia
-from database import User,fetch_user,store_to_db,chat_db,get_current_user,verify_user_by_email
+from database import User,fetch_user,store_to_db,chat_db,verify_user_by_email
 from usage_limit import rate_limit
 from fastapi.middleware.cors import CORSMiddleware
 from auth.googleauth import router as google_router
-from database import app as database_app
+
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
