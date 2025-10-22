@@ -20,7 +20,7 @@ app = APIRouter()
 
 
 
-
+DATABASE_URL = "sqlite:///user.db"
 # Database setup
 engine = create_engine("sqlite:///user.db", echo=True)
 Base = declarative_base()
