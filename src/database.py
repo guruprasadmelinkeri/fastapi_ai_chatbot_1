@@ -106,7 +106,7 @@ def get_db_session():
 
 #route to create a user 
 @app.put("/register", response_model=UserResponse)
-def add_user(user: CreateUser,password:str, db: Session = Depends(get_db_session)):
+def add_user(request:Request,user: CreateUser,password:str, db: Session = Depends(get_db_session)):
     if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already exists")
     
@@ -208,7 +208,7 @@ def logout(request:Request, db: Session = Depends(get_db_session)):
     return {"message": "User successfully logged out"}
 #  
 @app.post("/refresh")
-def refresh_access_token(email: str, db: Session = Depends(get_db_session)):
+def refresh_access_token(request:Request,email: str, db: Session = Depends(get_db_session)):
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -258,7 +258,7 @@ def refresh_access_token(email: str, db: Session = Depends(get_db_session)):
 ##method to protect routes via acess tokens
 
 
-def get_current_user(token:str):
+def get_current_user(request:Request,token:str):
     credential_error = HTTPException(
         status_code=401, detail="couldn't verify credentials"
     )
@@ -299,7 +299,7 @@ def get_current_user(token:str):
 
     return user
 
-def get_current_user_new(token: str):
+def get_current_user_new(request:Request,token: str):
     credential_error = HTTPException(status_code=401, detail="Couldn't verify credentials")
 
     try:
@@ -345,7 +345,7 @@ def get_current_user_new(token: str):
         raise credential_error
 
 
-def verify_user_by_email(email: str):
+def verify_user_by_email(request:Request,email: str):
     """
     Fully self-contained: handles DB session internally,
     fetches the user, checks for stored JWT, verifies it,
@@ -361,7 +361,7 @@ def verify_user_by_email(email: str):
         return get_current_user_new(user.current_token)
 
 @app.put("/premium")
-def set_premium(email:str):
+def set_premium(request:Request,email:str):
     with SessionLocal() as db:
         user=db.query(User).filter(User.email==email).first()
         if not user:
@@ -372,7 +372,7 @@ def set_premium(email:str):
         db.refresh(user)
 
 @app.get("/premium/staus")
-def get_premium(email:str):
+def get_premium(request:Request,email:str):
     with SessionLocal() as db:
         user=db.query(User).filter(User.email==email).first()
         if not user:
@@ -385,7 +385,7 @@ def get_premium(email:str):
 
 
 @app.get("/user", response_model=UserResponse)
-def get_user_by_email(email: str, db: Session = Depends(get_db_session)):
+def get_user_by_email(request:Request,email: str, db: Session = Depends(get_db_session)):
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
