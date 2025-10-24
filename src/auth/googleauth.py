@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -85,12 +86,17 @@ async def login_callback(request: Request, db: Session = Depends(get_db_session)
         db.commit()
 
         # Step 8: Return user info + tokens
-        return {
-            "email": user.email,
-            "name": user.name,
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        }
+        
+        request.session["email"] = user.email
+        request.session["name"] = user.name
+        request.session["access_token"] = access_token
+        request.session["refresh_token"] = refresh_token
+
+
+        
+        
+        # 4. Redirect to chat
+        return RedirectResponse(url="/chat", status_code=303)
 
     except Exception as e:
         db.rollback()

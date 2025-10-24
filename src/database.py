@@ -280,7 +280,7 @@ def get_current_user(request:Request,token:str):
                 raise HTTPException(status_code=401, detail="Session expired, login again")
 
             # Call your refresh function directly
-            new_tokens = refresh_access_token(
+            new_tokens = refresh_access_token(Request,
                 email=user.email,
                 db=db
             )
@@ -330,7 +330,7 @@ def get_current_user_new(request:Request,token: str):
                 raise HTTPException(status_code=401, detail="No valid refresh token, login again")
 
             # Call existing refresh route
-            new_tokens = refresh_access_token(email=user.email, db=db)
+            new_tokens = refresh_access_token(Request,email=user.email, db=db)
 
             # Update user's current access token
             user.current_token = new_tokens["access_token"]
@@ -345,7 +345,7 @@ def get_current_user_new(request:Request,token: str):
         raise credential_error
 
 
-def verify_user_by_email(request:Request,email: str):
+def verify_user_by_email(email: str):
     """
     Fully self-contained: handles DB session internally,
     fetches the user, checks for stored JWT, verifies it,
@@ -358,7 +358,7 @@ def verify_user_by_email(request:Request,email: str):
         if not user.current_token:
             raise HTTPException(status_code=401, detail="No active session")
         # Verify JWT internally
-        return get_current_user_new(user.current_token)
+        return get_current_user_new(Request,user.current_token)
 
 @app.put("/premium")
 def set_premium(request:Request,email:str):

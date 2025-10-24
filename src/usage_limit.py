@@ -1,5 +1,5 @@
 import time
-from fastapi import HTTPException,status
+from fastapi import HTTPException,status,Request
 from database import get_premium,get_throttle,update_throttle
 
 PREMIUM_LIMIT=5
@@ -13,7 +13,7 @@ def rate_limit(email:str):
 
     requests=get_throttle(email)
 
-    if(get_premium(email)):
+    if(get_premium(Request,email)):
         Rate_Limit=PREMIUM_LIMIT
         Time_Limit=PREMIUM_TIME
     else:

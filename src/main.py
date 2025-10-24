@@ -52,9 +52,9 @@ limiter = Limiter(key_func=user_or_ip_key)
 
 
 
+secret_key=os.getenv("SESSION_SECRET_KEY")
 
-
-app.add_middleware(SessionMiddleware, secret_key="supersecret")  # must be before router
+app.add_middleware(SessionMiddleware,secret_key)  # must be before router
 
 # Function to apply rate limiting to all routes in a router
 def apply_rate_limit_to_router(router, limit: str):
