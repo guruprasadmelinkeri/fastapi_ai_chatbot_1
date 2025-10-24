@@ -25,7 +25,7 @@ httpx==0.28.1
 idna==3.10
 itsdangerous==2.2.0
 libsumo==1.24.0
-libtraci==1.24.0.post0
+libtraci==1.24.0
 limits==5.6.0
 makefun==1.16.0
 Mako==1.3.10
@@ -49,8 +49,8 @@ sniffio==1.3.1
 SQLAlchemy==2.0.43
 sqlmodel==0.0.26
 starlette==0.48.0
-sumolib==1.24.0.post0
-traci==1.24.0.post0
+sumolib==1.24.0
+traci==1.24.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.5.0
