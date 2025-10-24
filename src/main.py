@@ -16,16 +16,29 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
-
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 
 limiter=Limiter(key_func=get_remote_address)
 
 
 
-
 app=FastAPI()
 load_dotenv()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5500",        # your local fronten
+                                         # your production frontend
+    ],
+    allow_credentials=True,   # if using cookies/sessions
+    allow_methods=["*"],      # GET, POST, PUT, DELETE etc.
+    allow_headers=["*"],
+)
+
+
+
 
 
 app.state.limiter = limiter

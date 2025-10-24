@@ -24,11 +24,15 @@ ADMIN_KEY=os.getenv("ADMIN_KEY")
 app = APIRouter()
 
 
+DATABASE_URL = os.getenv(
+    "DATABASE_URL")
 
 
-DATABASE_URL = "sqlite:///user.db"
 # Database setup
-engine = create_engine("sqlite:///user.db", echo=True)
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={} if DATABASE_URL.startswith("postgresql") else {"check_same_thread": False}
+)
 Base = declarative_base()
 
 # Models
@@ -92,7 +96,7 @@ def unique_id(user_id: str):
 Base.metadata.create_all(bind=engine)
 
 # Database Session
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine,autoflush=False)
 
 def get_db_session():
     session = SessionLocal()
